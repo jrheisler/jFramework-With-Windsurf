@@ -25,6 +25,11 @@ if (localStorage.getItem("savedGridData")) {
   const savedData = JSON.parse(localStorage.getItem("savedGridData"));
   currentFields = savedData.fields;
   dataStore.setAll(savedData.records);
+  // Update selected row index if we have a selected record
+  if (selectedRowIndex !== null) {
+    const recordId = savedData.records[selectedRowIndex]?.id;
+    selectedRowIndex = dataStore.getAll().findIndex(r => r.id === recordId);
+  }
 }
 
 // 🔵 Create hidden JSON uploader
@@ -60,6 +65,7 @@ function parseCsvToJson(csvText) {
 function openSlideoutEditor(record, rowIndex) {
   const panel = document.getElementById("slideoutPanel");
   panel.innerHTML = ""; // Clear old content
+  selectedRowIndex = rowIndex; // Ensure we have the correct index
 
   const formSpec = Object.keys(record).map(key => ({
     key,
@@ -72,10 +78,10 @@ function openSlideoutEditor(record, rowIndex) {
     formId: "editRecordForm",
     spec: formSpec,
     onSave: (updatedValues) => {
-      console.log("✅ Updated Record:", updatedValues);
+      //console.log("✅ Updated Record:", updatedValues);
 
       // Update in DataStore
-      dataStore.update(rowIndex + 1, updatedValues);
+      dataStore.updateByIndex(rowIndex, updatedValues);
       flashRowIndex = rowIndex;  // ✅ Set the row to flash
 
       // Save to localStorage
@@ -119,9 +125,9 @@ function filterRecords() {
 }
 
 function updateToolbarState() {
-  console.log("120", selectedRowIndex);
+  //console.log("120", selectedRowIndex);
   const hasSelection = selectedRowIndex !== null;
-  console.log("122", hasSelection);
+  //console.log("122", hasSelection);
   insertRowBtn.disabled = !hasSelection;
   duplicateRowBtn.disabled = !hasSelection;
   deleteRowBtn.disabled = !hasSelection;
@@ -232,11 +238,11 @@ function buildGrid(fields, records) {
     id: "spreadsheetView",
     fields,
     records,
-    onRowSelect: (rowIndex) => {
+    onRowSelect: (rowIndex) => {      
       selectedRowIndex = rowIndex;
       updateToolbarState();
       if (rowIndex !== null) {
-        openSlideoutEditor(currentRecords[rowIndex], rowIndex);
+        openSlideoutEditor(dataStore.getByIndex(rowIndex), rowIndex);
       } else {
         closeSlideout(); // If nothing selected, close
       }
@@ -342,7 +348,7 @@ function layout() {
         document.body.removeChild(a);
   
         URL.revokeObjectURL(url);
-        console.log("📥 Download triggered!");
+        //console.log("📥 Download triggered!");
       },
       color: "success"
     });
@@ -373,7 +379,7 @@ function layout() {
         currentSearchText = "";
         dataStore.clear();
         currentFields = [];
-        console.log("🧹 Grid and localStorage cleared!");
+        //console.log("🧹 Grid and localStorage cleared!");
       },
       color: "danger"
     });
@@ -444,6 +450,9 @@ function layout() {
     onClick: () => {
       const newId = dataStore.add({});
       buildGrid(currentFields, dataStore.getAll());
+      // Select the new row
+      selectedRowIndex = dataStore.getAll().findIndex(r => r.id === newId);
+      updateToolbarState();
     }
   });
   toolbar.appendChild(addRowBtn);
@@ -453,10 +462,12 @@ function layout() {
     id: "insertRowBtn",
     text: "📄 Insert Below",
     color: "primary",
-    onClick: () => {
+    onClick: () => {      
       if (selectedRowIndex !== null) {
         const newId = dataStore.insertAfter(selectedRowIndex, {});
         buildGrid(currentFields, dataStore.getAll());
+        // Select the new row
+        selectedRowIndex = dataStore.getAll().findIndex(r => r.id === newId);
         updateToolbarState(); // Update toolbar state after modification
       }
     }
@@ -470,9 +481,11 @@ function layout() {
     color: "primary",
     onClick: () => {
       if (selectedRowIndex !== null) {
-        const clone = { ...dataStore.get(selectedRowIndex) };
-        const newId = dataStore.insertAfter(selectedRowIndex, clone);
+        const clone = { ...dataStore.getByIndex(selectedRowIndex) };
+        const newId = dataStore.duplicateByIndex(selectedRowIndex);
         buildGrid(currentFields, dataStore.getAll());
+        // Select the new row
+        selectedRowIndex = dataStore.getAll().findIndex(r => r.id === newId);
         updateToolbarState(); // Update toolbar state after duplication
       }
     }
@@ -487,7 +500,7 @@ function layout() {
       if (selectedRowIndex !== null) {
         const confirmed = await confirmAction("Are you sure you want to delete this row?");
         if (confirmed) {
-          dataStore.remove(selectedRowIndex);
+          dataStore.removeByIndex(selectedRowIndex);
           selectedRowIndex = null;
           buildGrid(currentFields, dataStore.getAll());
         }
@@ -534,7 +547,7 @@ function layout() {
           const text = await file.text();
           const data = JSON.parse(text);
       
-          console.log("📂 JSON Uploaded:", data);
+          //console.log("📂 JSON Uploaded:", data);
       
           let fields, records;
       
@@ -583,7 +596,7 @@ function layout() {
           label: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
         }));
   
-        console.log("📂 CSV Parsed:", records);
+        //console.log("📂 CSV Parsed:", records);
   
         currentFields = fields;
         dataStore.setAll(records);
