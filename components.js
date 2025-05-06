@@ -4,28 +4,38 @@
 // 🧩 Button Component
 // ─────────────────────────
 
-function createButton({ id, text, onClick, color = "primary", style = {} }) {
+function createButton({ id, text, onClick, dataColor = "primary", style = {} }) {
     const button = document.createElement("button");
     button.id = id;
     button.textContent = text;
-  
-    const themedStyle = {
-      backgroundColor: Theme.colors[color] || Theme.colors.primary,
-      color: "#fff",
-      border: "none",
-      borderRadius: "4px",
-      padding: Theme.spacing.padding,
-      marginRight: Theme.spacing.margin,
-      cursor: "pointer",
-      fontFamily: Theme.fonts.base
-    };
-  
-    Object.assign(button.style, themedStyle, style);
-  
+    button.setAttribute("data-color", dataColor);
+
+    function updateTheme() {
+      const color = button.getAttribute("data-color");
+      const themedStyle = {
+        backgroundColor: Theme.colors[color] || Theme.colors.primary,
+        color: color === "danger" ? "#fff" : Theme.colors.text,
+        border: "none",
+        borderRadius: "4px",
+        padding: Theme.spacing.padding,
+        marginRight: Theme.spacing.margin,
+        cursor: "pointer",
+        fontFamily: Theme.fonts.base
+      };
+      Object.assign(button.style, themedStyle, style);
+    }
+
+    // Initial theme application
+    updateTheme();
+
+    // Subscribe to theme changes
+    if (!Theme._subscribers) Theme._subscribers = [];
+    Theme._subscribers.push(updateTheme);
+
     if (onClick) button.addEventListener("click", onClick);
-  
+
     return button;
-  }
+}
   
     // ─────────────────────────
   // 🪟 Modal Component
@@ -649,7 +659,7 @@ function createDynamicForm({ formId, spec, onSave, onCancel }) {
     Object.assign(headerRow.style, {
       display: "table-row",
       backgroundColor: Theme.colors.primary,
-      color: "#fff",
+      color: Theme.colors.text,
       fontWeight: "bold",
       minHeight: "48px"
     });
@@ -747,13 +757,32 @@ function createDynamicForm({ formId, spec, onSave, onCancel }) {
       table.appendChild(dataRow);
     });
   
-    table.refreshTheme = () => {
+    function updateTheme() {
+      // Update wrapper
       wrapper.style.backgroundColor = Theme.colors.background;
+      
+      // Update table
       table.style.color = Theme.colors.text;
+      
+      // Update header row
+      headerRow.style.backgroundColor = Theme.colors.primary;
+      headerRow.style.color = Theme.colors.text;
+      
+      // Update selected row if any
+      if (selectedRow) {
+        selectedRow.style.backgroundColor = Theme.colors.primary;
+        selectedRow.style.color = Theme.colors.text;
+      }
     };
+
+    // Apply initial theme
+    updateTheme();
+
+    // Subscribe to theme changes
+    if (!Theme._subscribers) Theme._subscribers = [];
+    Theme._subscribers.push(updateTheme);
   
-    Theme.subscribe(() => table.refreshTheme());
-    table.refreshTheme();
+    // Theme subscription is handled in updateTheme
   
     wrapper.appendChild(table);
     return wrapper;

@@ -12,7 +12,18 @@ const Theme = {
         success: "#27AE60",
         danger: "#E74C3C",
         accent: "#FFC107",
-        muted: "#888888"
+        muted: "#888888",
+        shadowColor: "rgba(0,0,0,0.1)",
+        transitionDuration: "0.3s",
+        borderRadius: "8px",
+        boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+        zIndex: {
+          base: 0,
+          dropdown: 1000,
+          overlay: 2000,
+          modal: 3000,
+          toast: 4000
+        }
       },
       dark: {
         background: "#1e1e1e",
@@ -22,17 +33,46 @@ const Theme = {
         success: "#66BB6A",
         danger: "#EF5350",
         accent: "#FFD54F",
-        muted: "#aaaaaa"
+        muted: "#aaaaaa",
+        shadowColor: "rgba(255,255,255,0.1)",
+        transitionDuration: "0.3s",
+        borderRadius: "8px",
+        boxShadow: "0 4px 6px rgba(255,255,255,0.1)",
+        zIndex: {
+          base: 0,
+          dropdown: 1000,
+          overlay: 2000,
+          modal: 3000,
+          toast: 4000
+        }
       }
     },
   
     fonts: {
-      base: "Arial, sans-serif"
+      base: "Arial, sans-serif",
+      heading: "Arial, sans-serif",
+      body: "Arial, sans-serif"
     },
   
     spacing: {
+      xs: "4px",
+      sm: "8px",
+      md: "12px",
+      lg: "16px",
+      xl: "24px",
+      xxl: "32px",
+      xxxl: "40px",
       padding: "12px",
       margin: "40px"
+    },
+
+    typography: {
+      heading: {
+        lineHeight: "1.3"
+      },
+      body: {
+        lineHeight: "1.5"
+      }
     },
   
     get colors() {

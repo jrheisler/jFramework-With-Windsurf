@@ -67,6 +67,22 @@ function openSlideoutEditor(record, rowIndex) {
   panel.innerHTML = ""; // Clear old content
   selectedRowIndex = rowIndex; // Ensure we have the correct index
 
+  // Apply theme styles to panel
+  Object.assign(panel.style, {
+    backgroundColor: Theme.colors.background,
+    color: Theme.colors.text,
+    transition: "transform 0.3s ease-in-out, background-color 0.3s",
+    width: "300px",
+    height: "100vh",
+    position: "fixed",
+    top: 0,
+    right: 0,
+    zIndex: 1000,
+    padding: Theme.spacing.padding,
+    boxShadow: "-5px 0 15px rgba(0,0,0,0.2)",
+    fontFamily: Theme.fonts.base
+  });
+
   const formSpec = Object.keys(record).map(key => ({
     key,
     label: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
@@ -78,11 +94,9 @@ function openSlideoutEditor(record, rowIndex) {
     formId: "editRecordForm",
     spec: formSpec,
     onSave: (updatedValues) => {
-      //console.log("✅ Updated Record:", updatedValues);
-
       // Update in DataStore
       dataStore.updateByIndex(rowIndex, updatedValues);
-      flashRowIndex = rowIndex;  // ✅ Set the row to flash
+      flashRowIndex = rowIndex;  // Set the row to flash
 
       // Save to localStorage
       localStorage.setItem("savedGridData", JSON.stringify({
@@ -103,11 +117,28 @@ function openSlideoutEditor(record, rowIndex) {
 
   panel.appendChild(form);
   panel.style.transform = "translateX(0)"; // Slide in
+
+  // Subscribe to theme changes
+  function updateTheme() {
+    panel.style.backgroundColor = Theme.colors.background;
+    panel.style.color = Theme.colors.text;
+    form.refreshTheme(); // Update form colors
+  }
+
+  if (!Theme._subscribers) Theme._subscribers = [];
+  Theme._subscribers.push(updateTheme);
+  updateTheme(); // Apply initial theme
 }
 
 function closeSlideout() {
   const panel = document.getElementById("slideoutPanel");
   panel.style.transform = "translateX(100%)"; // Slide out
+  
+  // Remove theme subscription when panel is closed
+  const index = Theme._subscribers.findIndex(fn => fn.name === "updateTheme");
+  if (index > -1) {
+    Theme._subscribers.splice(index, 1);
+  }
 }
 
 // 🔵 Global filter text
@@ -297,7 +328,7 @@ function layout() {
       onClick: () => {
         document.getElementById("jsonUploader").click();
       },
-      color: "secondary"
+      dataColor: "secondary"
     });
     container.appendChild(uploadJsonBtn);
   
@@ -307,7 +338,7 @@ function layout() {
       onClick: () => {
         document.getElementById("csvUploader").click();
       },
-      color: "secondary"
+      dataColor: "secondary"
     });
     container.appendChild(uploadCsvBtn);
   
@@ -323,7 +354,7 @@ function layout() {
         buildGrid(fields, dataStore.getAll());
         localStorage.setItem("savedGridData", JSON.stringify({ fields: currentFields, records: dataStore.getAll() }));
       },
-      color: "primary"
+      dataColor: "primary"
     });
     container.appendChild(generateBtn);
   
@@ -350,7 +381,7 @@ function layout() {
         URL.revokeObjectURL(url);
         //console.log("📥 Download triggered!");
       },
-      color: "success"
+      dataColor: "success"
     });
     container.appendChild(downloadBtn);
 
@@ -360,7 +391,7 @@ function layout() {
         onClick: () => {
           downloadCsvFromGrid();
         },
-        color: "success"
+        dataColor: "success"
       });
       container.appendChild(downloadCsvBtn);
       
@@ -381,14 +412,24 @@ function layout() {
         currentFields = [];
         //console.log("🧹 Grid and localStorage cleared!");
       },
-      color: "danger"
+      dataColor: "danger"
     });
     container.appendChild(clearDataBtn);
-  
-  
 
+    // 🌓 Theme Toggle Button
+    const themeToggleBtn = createButton({
+      id: "themeToggleBtn",
+      text: "🌙 Light/Dark",
+      onClick: () => {
+        const newMode = Theme.mode === "dark" ? "light" : "dark";
+        Theme.setMode(newMode);
+        localStorage.setItem("themeMode", newMode);
+      },
+      dataColor: "accent"
+    });
+    container.appendChild(themeToggleBtn);
 
-        // 🔎 Search Bar
+    // 🔎 Search Bar
     // 🛠 Search Box
     const searchContainer = document.createElement("div");
     Object.assign(searchContainer.style, {
@@ -448,7 +489,11 @@ function layout() {
     text: "➕ Add Row",
     color: "success",
     onClick: () => {
-      const newId = dataStore.add({});
+      let emptyCols = {};
+        currentFields.forEach(field => {
+          emptyCols[field.key] = "";
+        });
+      const newId = dataStore.add(emptyCols);
       buildGrid(currentFields, dataStore.getAll());
       // Select the new row
       selectedRowIndex = dataStore.getAll().findIndex(r => r.id === newId);
@@ -464,7 +509,11 @@ function layout() {
     color: "primary",
     onClick: () => {      
       if (selectedRowIndex !== null) {
-        const newId = dataStore.insertAfter(selectedRowIndex, {});
+        let emptyCols = {};
+        currentFields.forEach(field => {
+          emptyCols[field.key] = "";
+        });
+        const newId = dataStore.insertAfter(selectedRowIndex, emptyCols);
         buildGrid(currentFields, dataStore.getAll());
         // Select the new row
         selectedRowIndex = dataStore.getAll().findIndex(r => r.id === newId);
@@ -629,6 +678,39 @@ function layout() {
     return container;
   }
   
+
+// 🔵 Subscribe to theme changes
+Theme.subscribe(() => {
+    // Update search input styles
+    const searchInput = document.getElementById("searchInput");
+    if (searchInput) {
+        searchInput.style.backgroundColor = Theme.colors.background;
+        searchInput.style.color = Theme.colors.text;
+    }
+
+    // Update buttons
+    const buttons = document.querySelectorAll("button");
+    buttons.forEach(button => {
+        const color = button.getAttribute("data-color");
+        if (color) {
+            button.style.backgroundColor = Theme.colors[color];
+            button.style.color = color === "danger" ? "#fff" : Theme.colors.text;
+        }
+    });
+
+    // Update grid container
+    const gridContainer = document.getElementById("gridContainer");
+    if (gridContainer) {
+        gridContainer.style.backgroundColor = Theme.colors.background;
+        gridContainer.style.color = Theme.colors.text;
+    }
+});
+
+// 🔵 Load saved theme preference
+const savedTheme = localStorage.getItem("themeMode");
+if (savedTheme) {
+    Theme.setMode(savedTheme);
+}
 
 // 🔵 Boot the App
 newApp({
