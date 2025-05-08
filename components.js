@@ -4,49 +4,28 @@
 // 🧩 Button Component
 // ─────────────────────────
 
-function createButton({ id, text, onClick, dataColor = "primary", style = {}, icon = null }) {
+function createButton({ id, text, onClick, color = "primary", style = {} }) {
     const button = document.createElement("button");
     button.id = id;
-    button.setAttribute("data-color", dataColor);
-    
-    // Use icon if provided, otherwise use text
-    if (icon) {
-      button.textContent = icon;
-      button.title = text; // Set text as tooltip
-    } else {
-      button.textContent = text;
-    }
-
-    function updateTheme() {
-      const color = button.getAttribute("data-color");
-      const themedStyle = {
-        backgroundColor: Theme.colors[color] || Theme.colors.primary,
-        color: color === "danger" ? "#fff" : Theme.colors.text,
-        border: "none",
-        borderRadius: Theme.colors.borderRadius,
-        padding: Theme.spacing.sm, // Reduced padding for icon buttons
-        marginRight: Theme.spacing.md,
-        cursor: "pointer",
-        fontFamily: Theme.fonts.body,
-        boxShadow: Theme.colors.boxShadow,
-        transition: Theme.colors.transitionDuration,
-        lineHeight: Theme.typography.body.lineHeight,
-        fontSize: Theme.typography.heading.h4 // Larger font size for icons
-      };
-      Object.assign(button.style, themedStyle, style);
-    }
-
-    // Initial theme application
-    updateTheme();
-
-    // Subscribe to theme changes
-    if (!Theme._subscribers) Theme._subscribers = [];
-    Theme._subscribers.push(updateTheme);
-
+    button.textContent = text;
+  
+    const themedStyle = {
+      backgroundColor: Theme.colors[color] || Theme.colors.primary,
+      color: "#fff",
+      border: "none",
+      borderRadius: "4px",
+      padding: Theme.spacing.padding,
+      marginRight: Theme.spacing.margin,
+      cursor: "pointer",
+      fontFamily: Theme.fonts.base
+    };
+  
+    Object.assign(button.style, themedStyle, style);
+  
     if (onClick) button.addEventListener("click", onClick);
-
+  
     return button;
-}
+  }
   
     // ─────────────────────────
   // 🪟 Modal Component
@@ -62,17 +41,17 @@ function createButton({ id, text, onClick, dataColor = "primary", style = {}, ic
       left: "50%",
       transform: "translate(-50%, -50%)",
       backgroundColor: Theme.colors.background,
-      padding: Theme.spacing.lg,
-      borderRadius: Theme.colors.borderRadius,
-      boxShadow: Theme.colors.boxShadow,
+      padding: "20px",
+      borderRadius: "8px",
+      boxShadow: "0 0 20px rgba(0,0,0,0.3)",
       width,
       maxHeight: "90vh",
       overflowY: "auto",
       display: show ? "block" : "none",
-      zIndex: Theme.colors.zIndex.modal,
-      fontFamily: Theme.fonts.body,
+      zIndex: 1000,
+      fontFamily: Theme.fonts.base,
       color: Theme.colors.text,
-      transition: Theme.colors.transitionDuration
+      transition: "background-color 0.3s, color 0.3s"
     });
   
     // Optional Title
@@ -80,11 +59,11 @@ function createButton({ id, text, onClick, dataColor = "primary", style = {}, ic
       const titleElement = document.createElement("h2");
       titleElement.textContent = title;
       Object.assign(titleElement.style, {
-        marginBottom: Theme.spacing.lg,
-        fontFamily: Theme.fonts.body,
-        fontSize: Theme.typography.heading.h2,
+        marginBottom: "16px",
+        fontFamily: Theme.fonts.base,
+        fontSize: "24px",
         textAlign: "center",
-        transition: Theme.colors.transitionDuration,
+        transition: "color 0.3s",
         color: Theme.colors.text
       });
       modal.appendChild(titleElement);
@@ -630,26 +609,23 @@ function createDynamicForm({ formId, spec, onSave, onCancel }) {
   
 
   function createDataGrid({ id, fields, records, onRowSelect }) {
-    // Create container with scrolling
-    const container = document.createElement("div");
-    container.className = "grid-container";
-    
-    // Create wrapper for the grid
     const wrapper = document.createElement("div");
-    wrapper.className = "grid-wrapper";
     Object.assign(wrapper.style, {
-      marginTop: Theme.spacing.lg,
-      boxShadow: Theme.colors.boxShadow,
-      transition: Theme.colors.transitionDuration
+      overflowX: "auto",
+      width: "100%",
+      marginTop: "20px",
+      borderRadius: "8px",
+      backgroundColor: Theme.colors.background,
+      boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+      transition: "background-color 0.3s, color 0.3s"
     });
   
     const table = document.createElement("div");
     table.id = id;
-    table.className = "data-grid";
     Object.assign(table.style, {
       display: "table",
       width: "max-content",
-      fontFamily: Theme.fonts.body,
+      fontFamily: Theme.fonts.base,
       borderSpacing: "0",
       borderCollapse: "collapse"
     });
@@ -670,11 +646,12 @@ function createDynamicForm({ formId, spec, onSave, onCancel }) {
     const columnWidths = estimateColumnWidths(fields, records);
   
     const headerRow = document.createElement("div");
-    headerRow.className = "data-grid-row header";
     Object.assign(headerRow.style, {
       display: "table-row",
-      minHeight: Theme.spacing.xxl,
-      lineHeight: Theme.typography.heading.lineHeight
+      backgroundColor: Theme.colors.primary,
+      color: "#fff",
+      fontWeight: "bold",
+      minHeight: "48px"
     });
   
     fields.forEach((field, idx) => {
@@ -682,10 +659,10 @@ function createDynamicForm({ formId, spec, onSave, onCancel }) {
       Object.assign(cell.style, {
         display: "table-cell",
         width: `${columnWidths[idx]}px`,
-        padding: Theme.spacing.md,
+        padding: "12px 8px",
         textAlign: "center",
-        borderRight: `1px solid ${Theme.colors.muted}`,
-        borderBottom: `2px solid ${Theme.colors.muted}`,
+        borderRight: "1px solid #bbb",
+        borderBottom: "2px solid #ccc",
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis"
@@ -700,12 +677,11 @@ function createDynamicForm({ formId, spec, onSave, onCancel }) {
   
     records.forEach((record, rowIndex) => {
       const dataRow = document.createElement("div");
-      dataRow.className = "data-grid-row";
       Object.assign(dataRow.style, {
         display: "table-row",
-        minHeight: Theme.spacing.xxl,
+        minHeight: "48px",
         cursor: "pointer",
-        transition: Theme.colors.transitionDuration
+        transition: "background-color 0.3s, color 0.3s"
       });
   
       if (flashRowIndex === rowIndex) {
@@ -718,30 +694,34 @@ function createDynamicForm({ formId, spec, onSave, onCancel }) {
         }, 50);
       }
   
-      // Add hover effect using class
       dataRow.addEventListener("mouseover", () => {
         if (dataRow !== selectedRow) {
-          dataRow.classList.add("hover");
+          dataRow.style.backgroundColor = Theme.colors.accent;
+          dataRow.style.color = "#222";
         }
       });
       dataRow.addEventListener("mouseout", () => {
         if (dataRow !== selectedRow) {
-          dataRow.classList.remove("hover");
+          dataRow.style.backgroundColor = Theme.colors.background;
+          dataRow.style.color = Theme.colors.text;
         }
       });
   
       // 🧠 Correct click-to-select
       dataRow.addEventListener("click", () => {
         if (selectedRow && selectedRow !== dataRow) {
-          selectedRow.classList.remove("selected");
+          selectedRow.style.backgroundColor = Theme.colors.background;
+          selectedRow.style.color = Theme.colors.text;
         }
         if (selectedRow === dataRow) {
-          selectedRow.classList.remove("selected");
+          selectedRow.style.backgroundColor = Theme.colors.background;
+          selectedRow.style.color = Theme.colors.text;
           selectedRow = null;
           if (typeof onRowSelect === "function") onRowSelect(null);
         } else {
           selectedRow = dataRow;
-          dataRow.classList.add("selected");
+          dataRow.style.backgroundColor = Theme.colors.primary;
+          dataRow.style.color = "#fff";
           if (typeof onRowSelect === "function") onRowSelect(rowIndex);
         }
       });
@@ -752,15 +732,13 @@ function createDynamicForm({ formId, spec, onSave, onCancel }) {
         Object.assign(dataCell.style, {
           display: "table-cell",
           width: `${columnWidths[idx]}px`,
-          padding: Theme.spacing.md,
+          padding: "12px 8px",
           textAlign: "center",
-          borderRight: `1px solid ${Theme.colors.muted}`,
-          borderBottom: `1px solid ${Theme.colors.muted}`,
+          borderRight: "1px solid #eee",
+          borderBottom: "1px solid #eee",
           whiteSpace: "nowrap",
           overflow: "hidden",
-          textOverflow: "ellipsis",
-          backgroundColor: Theme.colors.background,
-          color: Theme.colors.text
+          textOverflow: "ellipsis"
         });
         dataCell.textContent = record[field.key] !== undefined ? record[field.key] : "-";
         dataRow.appendChild(dataCell);
@@ -769,46 +747,16 @@ function createDynamicForm({ formId, spec, onSave, onCancel }) {
       table.appendChild(dataRow);
     });
   
-    function updateTheme() {
-      // Update wrapper
+    table.refreshTheme = () => {
       wrapper.style.backgroundColor = Theme.colors.background;
-      wrapper.style.color = Theme.colors.text;
-      
-      // Update table
       table.style.color = Theme.colors.text;
-      
-      // Update header row
-      headerRow.style.backgroundColor = Theme.colors.primary;
-      headerRow.style.color = Theme.colors.text;
-      
-      // Update all cells first
-      Array.from(table.querySelectorAll('div')).forEach(cell => {
-        // Remove inline styles and let CSS classes handle it
-        cell.style.removeProperty('background-color');
-        cell.style.removeProperty('color');
-        cell.style.removeProperty('border-color');
-      });
-
-      // Update selected row if any - after updating all cells
-      if (selectedRow) {
-        // Remove inline styles and let CSS classes handle it
-        selectedRow.style.removeProperty('background-color');
-        selectedRow.style.removeProperty('color');
-      }
     };
-
-    // Apply initial theme
-    updateTheme();
-
-    // Subscribe to theme changes
-    if (!Theme._subscribers) Theme._subscribers = [];
-    Theme._subscribers.push(updateTheme);
   
-    // Theme subscription is handled in updateTheme
+    Theme.subscribe(() => table.refreshTheme());
+    table.refreshTheme();
   
     wrapper.appendChild(table);
-    container.appendChild(wrapper);
-    return container;
+    return wrapper;
   }
   
   

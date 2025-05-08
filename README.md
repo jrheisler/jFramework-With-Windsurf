@@ -105,5 +105,4 @@ Let’s keep it clean, fast, and browser-first. ✨
 ![Made with JS](https://img.shields.io/badge/Made%20with-JavaScript-blue)
 ```
   
-  can be run locally with:
-  dart pub global run dhttpd --path . --port 3000
+clean-baseline 7:14 5/8/2024

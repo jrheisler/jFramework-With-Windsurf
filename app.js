@@ -2,7 +2,6 @@
 
 // 🔵 Apply initial theme
 Theme.applyGlobalStyles();
-Theme.addStyles();
 
 // 🔵 Update theme on mode change
 Theme.onModeChange = () => {
@@ -26,11 +25,6 @@ if (localStorage.getItem("savedGridData")) {
   const savedData = JSON.parse(localStorage.getItem("savedGridData"));
   currentFields = savedData.fields;
   dataStore.setAll(savedData.records);
-  // Update selected row index if we have a selected record
-  if (selectedRowIndex !== null) {
-    const recordId = savedData.records[selectedRowIndex]?.id;
-    selectedRowIndex = dataStore.getAll().findIndex(r => r.id === recordId);
-  }
 }
 
 // 🔵 Create hidden JSON uploader
@@ -66,23 +60,6 @@ function parseCsvToJson(csvText) {
 function openSlideoutEditor(record, rowIndex) {
   const panel = document.getElementById("slideoutPanel");
   panel.innerHTML = ""; // Clear old content
-  selectedRowIndex = rowIndex; // Ensure we have the correct index
-
-  // Apply theme styles to panel
-  Object.assign(panel.style, {
-    backgroundColor: Theme.colors.background,
-    color: Theme.colors.text,
-    transition: `transform ${Theme.colors.transitionDuration} ease-in-out, background-color ${Theme.colors.transitionDuration}`,
-    width: "300px",
-    height: "100vh",
-    position: "fixed",
-    top: 0,
-    right: 0,
-    zIndex: Theme.colors.zIndex.modal,
-    padding: Theme.spacing.md,
-    boxShadow: Theme.colors.boxShadow,
-    fontFamily: Theme.fonts.body
-  });
 
   const formSpec = Object.keys(record).map(key => ({
     key,
@@ -95,9 +72,11 @@ function openSlideoutEditor(record, rowIndex) {
     formId: "editRecordForm",
     spec: formSpec,
     onSave: (updatedValues) => {
+      console.log("✅ Updated Record:", updatedValues);
+
       // Update in DataStore
-      dataStore.updateByIndex(rowIndex, updatedValues);
-      flashRowIndex = rowIndex;  // Set the row to flash
+      dataStore.update(rowIndex + 1, updatedValues);
+      flashRowIndex = rowIndex;  // ✅ Set the row to flash
 
       // Save to localStorage
       localStorage.setItem("savedGridData", JSON.stringify({
@@ -118,28 +97,11 @@ function openSlideoutEditor(record, rowIndex) {
 
   panel.appendChild(form);
   panel.style.transform = "translateX(0)"; // Slide in
-
-  // Subscribe to theme changes
-  function updateTheme() {
-    panel.style.backgroundColor = Theme.colors.background;
-    panel.style.color = Theme.colors.text;
-    form.refreshTheme(); // Update form colors
-  }
-
-  if (!Theme._subscribers) Theme._subscribers = [];
-  Theme._subscribers.push(updateTheme);
-  updateTheme(); // Apply initial theme
 }
 
 function closeSlideout() {
   const panel = document.getElementById("slideoutPanel");
   panel.style.transform = "translateX(100%)"; // Slide out
-  
-  // Remove theme subscription when panel is closed
-  const index = Theme._subscribers.findIndex(fn => fn.name === "updateTheme");
-  if (index > -1) {
-    Theme._subscribers.splice(index, 1);
-  }
 }
 
 // 🔵 Global filter text
@@ -157,9 +119,9 @@ function filterRecords() {
 }
 
 function updateToolbarState() {
-  //console.log("120", selectedRowIndex);
+  console.log("120", selectedRowIndex);
   const hasSelection = selectedRowIndex !== null;
-  //console.log("122", hasSelection);
+  console.log("122", hasSelection);
   insertRowBtn.disabled = !hasSelection;
   duplicateRowBtn.disabled = !hasSelection;
   deleteRowBtn.disabled = !hasSelection;
@@ -270,11 +232,11 @@ function buildGrid(fields, records) {
     id: "spreadsheetView",
     fields,
     records,
-    onRowSelect: (rowIndex) => {      
+    onRowSelect: (rowIndex) => {
       selectedRowIndex = rowIndex;
       updateToolbarState();
       if (rowIndex !== null) {
-        openSlideoutEditor(dataStore.getByIndex(rowIndex), rowIndex);
+        openSlideoutEditor(currentRecords[rowIndex], rowIndex);
       } else {
         closeSlideout(); // If nothing selected, close
       }
@@ -324,224 +286,208 @@ function layout() {
   
     // 🗂 Upload Buttons
     const uploadJsonBtn = createButton({
-        id: "uploadJsonBtn",
-        text: "Load JSON",
-        icon: Theme.icons.upload,
-        tooltip: "Upload JSON file",
-        onClick: () => {
-          document.getElementById("jsonUploader").click();
-        },
-        dataColor: "secondary"
+      id: "uploadJsonBtn",
+      text: "📂 Load JSON",
+      onClick: () => {
+        document.getElementById("jsonUploader").click();
+      },
+      color: "secondary"
     });
     container.appendChild(uploadJsonBtn);
   
     const uploadCsvBtn = createButton({
       id: "uploadCsvBtn",
-      text: "Load CSV",
-      icon: Theme.icons.upload,
-      tooltip: "Upload CSV file",
+      text: "📂 Load CSV",
       onClick: () => {
         document.getElementById("csvUploader").click();
       },
-      dataColor: "secondary"
+      color: "secondary"
     });
     container.appendChild(uploadCsvBtn);
   
     // 🛠 Generate Fake Data Button
     const generateBtn = createButton({
-        id: "generateFakeBtn",
-        text: "Generate Fake Data",
-        icon: Theme.icons.generate,
-        tooltip: "Generate fake data",
-        onClick: () => {
-          const gridSpec = generateFakeGridSpec(10);
-          const { fields, records } = convertFormSpecToGridData(gridSpec);
-          currentFields = fields;
-          dataStore.setAll(records);
-          buildGrid(fields, dataStore.getAll());
-          localStorage.setItem("savedGridData", JSON.stringify({ fields: currentFields, records: dataStore.getAll() }));
-        },
-        dataColor: "primary"
+      id: "generateFakeBtn",
+      text: "🛠 Generate Fake Data",
+      onClick: () => {
+        const gridSpec = generateFakeGridSpec(10);
+        const { fields, records } = convertFormSpecToGridData(gridSpec);
+        currentFields = fields;
+        dataStore.setAll(records);
+        buildGrid(fields, dataStore.getAll());
+        localStorage.setItem("savedGridData", JSON.stringify({ fields: currentFields, records: dataStore.getAll() }));
+      },
+      color: "primary"
     });
     container.appendChild(generateBtn);
   
     // 📥 Download Button
     const downloadBtn = createButton({
-        id: "downloadJsonBtn",
-        text: "Download JSON",
-        icon: Theme.icons.download,
-        tooltip: "Download JSON file",
-        onClick: () => {
-          const saved = localStorage.getItem("savedGridData");
-          if (!saved) {
-            alert("No data to download!");
-            return;
-          }
-          const blob = new Blob([saved], { type: "application/json" });
-          const url = URL.createObjectURL(blob);
-
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "grid-data.json";
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-
-          URL.revokeObjectURL(url);
-        },
-        dataColor: "success"
+      id: "downloadJsonBtn",
+      text: "📥 Download JSON",
+      onClick: () => {
+        const saved = localStorage.getItem("savedGridData");
+        if (!saved) {
+          alert("No data to download!");
+          return;
+        }
+        const blob = new Blob([saved], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+  
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "grid-data.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+  
+        URL.revokeObjectURL(url);
+        console.log("📥 Download triggered!");
+      },
+      color: "success"
     });
     container.appendChild(downloadBtn);
 
     const downloadCsvBtn = createButton({
         id: "downloadCsvBtn",
-        text: "Download CSV",
-        icon: Theme.icons.download,
-        tooltip: "Download CSV file",
+        text: "📥 Download CSV",
         onClick: () => {
           downloadCsvFromGrid();
         },
-        dataColor: "success"
-    });
-    container.appendChild(downloadCsvBtn);
+        color: "success"
+      });
+      container.appendChild(downloadCsvBtn);
       
       
   
     // 🧹 Clear Button
     const clearDataBtn = createButton({
-        id: "clearDataBtn",
-        text: "Clear Grid",
-        icon: Theme.icons.clear,
-        tooltip: "Clear grid data",
-        onClick: () => {
-          localStorage.removeItem("savedGridData");
-          const gridContainer = document.getElementById("gridContainer");
-          if (gridContainer) {
-            gridContainer.innerHTML = "No data loaded.";
-          }
-          currentSearchText = "";
-          dataStore.clear();
-          currentFields = [];
-        },
-        dataColor: "danger"
+      id: "clearDataBtn",
+      text: "🧹 Clear Grid",
+      onClick: () => {
+        localStorage.removeItem("savedGridData");
+        const gridContainer = document.getElementById("gridContainer");
+        if (gridContainer) {
+          gridContainer.innerHTML = "No data loaded.";
+        }
+        currentSearchText = "";
+        dataStore.clear();
+        currentFields = [];
+        console.log("🧹 Grid and localStorage cleared!");
+      },
+      color: "danger"
     });
     container.appendChild(clearDataBtn);
+  
+  
 
-    // 🌓 Theme Toggle Button
-    const themeToggleBtn = createButton({
-        id: "themeToggleBtn",
-        text: "Light/Dark",
-        icon: Theme.icons.theme,
-        tooltip: "Toggle light/dark theme",
-        onClick: () => {
-          const newMode = Theme.mode === "dark" ? "light" : "dark";
-          Theme.mode = newMode;
-          Theme.applyGlobalStyles();
-          Theme.addStyles();
-        },
-        dataColor: "accent"
+
+        // 🔎 Search Bar
+    // 🛠 Search Box
+    const searchContainer = document.createElement("div");
+    Object.assign(searchContainer.style, {
+      display: "flex",
+      gap: "10px",
+      alignItems: "center",
+      padding: "10px 0",
+      width: "100%"
     });
-    container.appendChild(themeToggleBtn);
 
-    
+    const searchInput = document.createElement("input");
+    searchInput.id = "searchInput";
+    searchInput.placeholder = "🔍 Search...";
+    Object.assign(searchInput.style, {
+      flex: "1",
+      padding: "10px",
+      borderRadius: "6px",
+      border: "1px solid #ccc",
+      fontFamily: Theme.fonts.base,
+      backgroundColor: Theme.colors.background,
+      color: Theme.colors.text,
+      transition: "background-color 0.3s, color 0.3s",
+      fontSize: "16px"
+    });
+
+    let searchDebounceTimer;
+
+    searchInput.addEventListener("input", (e) => {
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => {
+        currentSearchTerm = e.target.value.trim().toLowerCase();
+        if (currentFields.length && currentRecords.length) {
+          buildGrid(currentFields, currentRecords);
+        }
+      }, 200);
+    });
+
+    searchContainer.appendChild(searchInput);
+    container.appendChild(searchContainer);
+
+    //Api builder, only works when hosted. so off now
+    //const apiForm = createApiForm();
+    //container.appendChild(apiForm);
+  
   // 🧩 Create Toolbar
   const toolbar = document.createElement("div");
   Object.assign(toolbar.style, {
     display: "flex",
-    gap: Theme.spacing.md,
-    marginTop: Theme.spacing.lg,
-    marginBottom: Theme.spacing.md
+    gap: "10px",
+    marginTop: "20px",
+    marginBottom: "10px"
   });
 
-  // Add Row Button
+  // ➕ Add Row Button
   const addRowBtn = createButton({
     id: "addRowBtn",
-    text: "Add Row",
-    icon: Theme.icons.add,
-    tooltip: "Add new row",
-    dataColor: "success",
+    text: "➕ Add Row",
+    color: "success",
     onClick: () => {
-      let emptyCols = {};
-        currentFields.forEach(field => {
-          emptyCols[field.key] = "";
-        });
-      const newId = dataStore.add(emptyCols);
+      const newId = dataStore.add({});
       buildGrid(currentFields, dataStore.getAll());
-      // Select the new row
-      selectedRowIndex = dataStore.getAll().findIndex(r => r.id === newId);
-      updateToolbarState();
     }
   });
   toolbar.appendChild(addRowBtn);
 
-    // Insert Row Button
-    insertRowBtn = createButton({
-      id: "insertRowBtn",
-      text: "Insert Below",
-      icon: Theme.icons.insert,
-      tooltip: "Insert row below",
-      dataColor: "info",
-      onClick: () => {      
-        if (selectedRowIndex !== null) {
-          let emptyCols = {};
-          currentFields.forEach(field => {
-            emptyCols[field.key] = "";
-          });
-          const newId = dataStore.insertAfter(selectedRowIndex, emptyCols);
-          buildGrid(currentFields, dataStore.getAll());
-          // Select the new row
-          selectedRowIndex = dataStore.getAll().findIndex(r => r.id === newId);
-          updateToolbarState(); // Update toolbar state after modification
-        }
+  // 📄 Insert Row Button
+  insertRowBtn = createButton({
+    id: "insertRowBtn",
+    text: "📄 Insert Below",
+    color: "primary",
+    onClick: () => {
+      if (selectedRowIndex !== null) {
+        const newId = dataStore.insertAfter(selectedRowIndex, {});
+        buildGrid(currentFields, dataStore.getAll());
+        updateToolbarState(); // Update toolbar state after modification
       }
-    });
+    }
+  });
   
 
 
-    duplicateRowBtn = createButton({
-        id: "duplicateRowBtn",
-        text: "Duplicate",
-        icon: Theme.icons.duplicate,
-        tooltip: "Duplicate selected row",
-        dataColor: "warning",
-        onClick: () => {
-          if (selectedRowIndex !== null) {
-        const clone = { ...dataStore.getByIndex(selectedRowIndex) };
-        const newId = dataStore.duplicateByIndex(selectedRowIndex);
+  duplicateRowBtn = createButton({
+    id: "duplicateRowBtn",
+    text: "📄 Duplicate",
+    color: "primary",
+    onClick: () => {
+      if (selectedRowIndex !== null) {
+        const clone = { ...dataStore.get(selectedRowIndex) };
+        const newId = dataStore.insertAfter(selectedRowIndex, clone);
         buildGrid(currentFields, dataStore.getAll());
-        // Select the new row
-        selectedRowIndex = dataStore.getAll().findIndex(r => r.id === newId);
         updateToolbarState(); // Update toolbar state after duplication
       }
     }
   });
-    editRowBtn = createButton({
-        id: "editRowBtn",
-        text: "Edit",
-        icon: Theme.icons.edit,
-        tooltip: "Edit selected row",
-        dataColor: "primary",
-        onClick: async () => {
-          if (selectedRowIndex !== null) {
-            const confirmed = await confirmAction("Are you sure you want to edit this row?");
-            if (confirmed) {
-              openSlideoutEditor(dataStore.getByIndex(selectedRowIndex), selectedRowIndex);
-            }
-          }
-        }
-    });
+  
 
-    deleteRowBtn = createButton({
-        id: "deleteRowBtn",
-        text: "Delete",
-        icon: Theme.icons.delete,
-        tooltip: "Delete selected row",
-        dataColor: "danger",
-        onClick: async () => {
-          if (selectedRowIndex !== null) {
+  deleteRowBtn = createButton({
+    id: "deleteRowBtn",
+    text: "🗑️ Delete",
+    color: "danger",
+    onClick: async () => {
+      if (selectedRowIndex !== null) {
         const confirmed = await confirmAction("Are you sure you want to delete this row?");
         if (confirmed) {
-          dataStore.removeByIndex(selectedRowIndex);
+          dataStore.remove(selectedRowIndex);
           selectedRowIndex = null;
           buildGrid(currentFields, dataStore.getAll());
         }
@@ -550,76 +496,28 @@ function layout() {
   });
 
   const viewSummaryBtn = createButton({
-        id: "viewSummaryBtn",
-        text: "View Summary",
-        icon: Theme.icons.summary,
-        tooltip: "View data summary",
-        dataColor: "info",
-        onClick: () => {
-          viewSummary();
-        }
-      });
+    id: "viewSummaryBtn",
+    text: "📊 View Summary",
+    color: "info",
+    onClick: () => {
+      viewSummary();
+    }
+  });
 
   const viewChartBtn = createButton({
-        id: "viewChartBtn",
-        text: "View Chart",
-        icon: Theme.icons.chart,
-        tooltip: "View data chart",
-        dataColor: "accent",
-        onClick: () => viewChart()
-      });
-
+    id: "viewChartBtn",
+    text: "📊 View Chart",
+    color: "info",
+    onClick: viewChart
+  });
+ 
   toolbar.appendChild(insertRowBtn);
   toolbar.appendChild(duplicateRowBtn);
-  toolbar.appendChild(editRowBtn);
   toolbar.appendChild(deleteRowBtn);
   toolbar.appendChild(viewSummaryBtn);
   toolbar.appendChild(viewChartBtn);
- 
-// Search Bar    
-// 🔎 Search Bar    
-const searchContainer = document.createElement("div");
-Object.assign(searchContainer.style, {
-  display: "flex",
-  gap: "10px",
-  alignItems: "center",
-  padding: "10px 0",
-  width: "100%"
-});
 
-const searchInput = document.createElement("input");
-searchInput.id = "searchInput";
-searchInput.placeholder = "Search...";
-Object.assign(searchInput.style, {
-  flex: "1",
-  padding: Theme.spacing.md,
-  borderRadius: Theme.colors.borderRadius,
-  border: `1px solid ${Theme.colors.muted}`,
-  fontFamily: Theme.fonts.body,
-  backgroundColor: Theme.colors.background,
-  color: Theme.colors.text,
-  transition: Theme.colors.transitionDuration,
-  fontSize: Theme.typography.body.fontSize
-});
-
-let searchDebounceTimer;
-
-searchInput.addEventListener("input", (e) => {
-  clearTimeout(searchDebounceTimer);
-  searchDebounceTimer = setTimeout(() => {
-    currentSearchTerm = e.target.value.trim().toLowerCase();
-    if (currentFields.length && currentRecords.length) {
-      buildGrid(currentFields, currentRecords);
-    }
-  }, 200);
-});
-
-searchContainer.appendChild(searchInput);
-container.appendChild(searchContainer);
-
-//Api builder, only works when hosted. so off now
-//const apiForm = createApiForm();
-//container.appendChild(apiForm);
+  container.appendChild(toolbar);
 
     // 🔵 The Grid Container
     const gridContainer = document.createElement("div");
@@ -636,7 +534,7 @@ container.appendChild(searchContainer);
           const text = await file.text();
           const data = JSON.parse(text);
       
-          //console.log("📂 JSON Uploaded:", data);
+          console.log("📂 JSON Uploaded:", data);
       
           let fields, records;
       
@@ -685,7 +583,7 @@ container.appendChild(searchContainer);
           label: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
         }));
   
-        //console.log("📂 CSV Parsed:", records);
+        console.log("📂 CSV Parsed:", records);
   
         currentFields = fields;
         dataStore.setAll(records);
@@ -714,34 +612,10 @@ container.appendChild(searchContainer);
         zIndex: 1000
     });
     document.body.appendChild(slideout);
-    container.appendChild(toolbar);
 
     return container;
   }
   
-
-// 🔵 Subscribe to theme changes
-Theme.subscribe(() => {
-    // Update search input styles
-    const searchInput = document.getElementById("searchInput");
-    if (searchInput) {
-        searchInput.style.backgroundColor = Theme.colors.background;
-        searchInput.style.color = Theme.colors.text;
-    }
-
-    // Update grid container
-    const gridContainer = document.getElementById("gridContainer");
-    if (gridContainer) {
-        gridContainer.style.backgroundColor = Theme.colors.background;
-        gridContainer.style.color = Theme.colors.text;
-    }
-});
-
-// 🔵 Load saved theme preference
-const savedTheme = localStorage.getItem("themeMode");
-if (savedTheme) {
-    Theme.setMode(savedTheme);
-}
 
 // 🔵 Boot the App
 newApp({
