@@ -21,7 +21,7 @@ const Theme = {
         secondary: "#4DD0E1",
         success: "#66BB6A",
         danger: "#EF5350",
-        accent: "#FFD54F",
+        accent: "#6A1B9A",
         muted: "#aaaaaa"
       }
     },
@@ -67,6 +67,6 @@ const Theme = {
       if (Theme.onModeChange) {
         Theme.onModeChange(newMode);
       }
-    }
+    }  
   };
   

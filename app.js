@@ -27,6 +27,43 @@ if (localStorage.getItem("savedGridData")) {
   dataStore.setAll(savedData.records);
 }
 
+
+
+
+
+
+
+const style = document.createElement("style");
+style.textContent = `
+  html, body {
+    scrollbar-width: thin;
+    scrollbar-color: ${Theme.colors.accent} transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: ${Theme.colors.accent};
+    border-radius: 6px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #8E24AA;
+  }
+`;
+document.head.appendChild(style);
+
+
+
 // 🔵 Create hidden JSON uploader
 const jsonUploader = document.createElement("input");
 jsonUploader.type = "file";
@@ -212,11 +249,28 @@ function viewChart() {
 
   modal.style.display = "block";
 }
-
-
+ // 🔵 The Grid Wrapper
+const gridWrapper = document.createElement("div");
 // 🔵 Updated Build Grid (filtered if needed)
-function buildGrid(fields, records) {
-  const gridContainer = document.getElementById("gridContainer");
+function buildGrid(fields, records) { 
+
+gridWrapper.id = "gridWrapper";
+Object.assign(gridWrapper.style, {
+  maxHeight: "calc(100vh - 300px)", // adjust based on your layout
+  overflow: "auto",
+  border: `2px solid ${Theme.colors.accent}`, // vibrant theme color
+  borderRadius: "8px"
+});
+
+
+// 🔵 The Grid Container
+  const gridContainer = document.createElement("div");
+  gridContainer.id = "gridContainer";
+  gridContainer.className = "grid-container";
+  gridContainer.style.minHeight = "300px";
+
+  // Wrap grid container
+  gridWrapper.appendChild(gridContainer);
   gridContainer.innerHTML = ""; // Clear previous grid
 
   if (!records || records.length === 0) {
@@ -243,10 +297,9 @@ function buildGrid(fields, records) {
     }
   });
 
-  gridContainer.appendChild(grid);
+  gridContainer.appendChild(grid);  
   flashRowIndex = null;
 }
-
 
 
     
@@ -389,7 +442,7 @@ function layout() {
       display: "flex",
       gap: "10px",
       alignItems: "center",
-      padding: "10px 0",
+      padding: "4px 0",
       width: "100%"
     });
 
@@ -400,7 +453,7 @@ function layout() {
       flex: "1",
       padding: "10px",
       borderRadius: "6px",
-      border: "1px solid #ccc",
+      border: `2px solid ${Theme.colors.accent}`, // vibrant theme color
       fontFamily: Theme.fonts.base,
       backgroundColor: Theme.colors.background,
       color: Theme.colors.text,
@@ -422,6 +475,8 @@ function layout() {
 
     searchContainer.appendChild(searchInput);
     container.appendChild(searchContainer);
+    
+    container.appendChild(gridWrapper);
 
     //Api builder, only works when hosted. so off now
     //const apiForm = createApiForm();
@@ -432,8 +487,8 @@ function layout() {
   Object.assign(toolbar.style, {
     display: "flex",
     gap: "10px",
-    marginTop: "20px",
-    marginBottom: "10px"
+    marginTop: "8px",
+    marginBottom: "8px"
   });
 
   // ➕ Add Row Button
@@ -606,7 +661,7 @@ function layout() {
         backgroundColor: Theme.colors.background,
         boxShadow: "-2px 0 8px rgba(0,0,0,0.2)",
         overflowY: "auto",
-        padding: "20px",
+        padding: "4px",
         transform: "translateX(100%)",  // Hidden initially
         transition: "transform 0.3s ease-in-out",
         zIndex: 1000
