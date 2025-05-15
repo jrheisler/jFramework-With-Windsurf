@@ -654,23 +654,6 @@ function createDynamicForm({ formId, spec, onSave, onCancel }) {
       minHeight: "48px"
     });
   
-    fields.forEach((field, idx) => {
-      const cell = document.createElement("div");
-      Object.assign(cell.style, {
-        display: "table-cell",
-        width: `${columnWidths[idx]}px`,
-        padding: "12px 8px",
-        textAlign: "center",
-        borderRight: "1px solid #bbb",
-        borderBottom: "2px solid #ccc",
-        whiteSpace: "nowrap",
-        overflow: "hidden",
-        textOverflow: "ellipsis"
-      });
-      cell.textContent = field.label;
-      headerRow.appendChild(cell);
-    });
-  
     table.appendChild(headerRow);
   
     let selectedRow = null;

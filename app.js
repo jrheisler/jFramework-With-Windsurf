@@ -27,12 +27,6 @@ if (localStorage.getItem("savedGridData")) {
   dataStore.setAll(savedData.records);
 }
 
-
-
-
-
-
-
 const style = document.createElement("style");
 style.textContent = `
   html, body {
