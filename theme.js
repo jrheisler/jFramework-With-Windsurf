@@ -31,8 +31,8 @@ const Theme = {
     },
   
     spacing: {
-      padding: "12px",
-      margin: "40px"
+      padding: "8px",
+      margin: "12px"
     },
   
     get colors() {

@@ -334,17 +334,19 @@ function layout() {
     // 🗂 Upload Buttons
     const uploadJsonBtn = createButton({
       id: "uploadJsonBtn",
-      text: "📂 Load JSON",
+      text: "📋",
+      tooltip: "Load JSON",
       onClick: () => {
         document.getElementById("jsonUploader").click();
       },
-      color: "secondary"
+      color: "primary"
     });
     container.appendChild(uploadJsonBtn);
   
     const uploadCsvBtn = createButton({
       id: "uploadCsvBtn",
-      text: "📂 Load CSV",
+      text: "🗂",
+      tooltip: "Load CSV",
       onClick: () => {
         document.getElementById("csvUploader").click();
       },
@@ -355,7 +357,8 @@ function layout() {
     // 🛠 Generate Fake Data Button
     const generateBtn = createButton({
       id: "generateFakeBtn",
-      text: "🛠 Generate Fake Data",
+      text: "🛠",
+      tooltip: "Generate Fake Data",
       onClick: () => {
         const gridSpec = generateFakeGridSpec(10);
         const { fields, records } = convertFormSpecToGridData(gridSpec);
@@ -371,7 +374,8 @@ function layout() {
     // 📥 Download Button
     const downloadBtn = createButton({
       id: "downloadJsonBtn",
-      text: "📥 Download JSON",
+      text: "📥",
+      tooltip: "Download JSON",
       onClick: () => {
         const saved = localStorage.getItem("savedGridData");
         if (!saved) {
@@ -397,11 +401,12 @@ function layout() {
 
     const downloadCsvBtn = createButton({
         id: "downloadCsvBtn",
-        text: "📥 Download CSV",
+        text: "📥",
+        tooltip: "Download CSV",
         onClick: () => {
           downloadCsvFromGrid();
         },
-        color: "success"
+        color: "accent"
       });
       container.appendChild(downloadCsvBtn);
       
@@ -410,7 +415,8 @@ function layout() {
     // 🧹 Clear Button
     const clearDataBtn = createButton({
       id: "clearDataBtn",
-      text: "🧹 Clear Grid",
+      text: "🧹",
+      tooltip: "Clear Grid",
       onClick: () => {
         localStorage.removeItem("savedGridData");
         const gridContainer = document.getElementById("gridContainer");

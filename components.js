@@ -4,28 +4,34 @@
 // 🧩 Button Component
 // ─────────────────────────
 
-function createButton({ id, text, onClick, color = "primary", style = {} }) {
-    const button = document.createElement("button");
-    button.id = id;
-    button.textContent = text;
-  
-    const themedStyle = {
-      backgroundColor: Theme.colors[color] || Theme.colors.primary,
-      color: "#fff",
-      border: "none",
-      borderRadius: "4px",
-      padding: Theme.spacing.padding,
-      marginRight: Theme.spacing.margin,
-      cursor: "pointer",
-      fontFamily: Theme.fonts.base
-    };
-  
-    Object.assign(button.style, themedStyle, style);
-  
-    if (onClick) button.addEventListener("click", onClick);
-  
-    return button;
+function createButton({ id, text, onClick, color = "primary", style = {}, tooltip = "" }) {
+  const button = document.createElement("button");
+  button.id = id;
+  button.textContent = text;
+
+  const themedStyle = {
+    backgroundColor: Theme.colors[color] || Theme.colors.primary,
+    color: "#fff",
+    border: "none",
+    borderRadius: "4px",
+    padding: Theme.spacing.padding,
+    marginRight: Theme.spacing.margin,
+    cursor: "pointer",
+    fontFamily: Theme.fonts.base
+  };
+
+  Object.assign(button.style, themedStyle, style);
+
+  if (onClick) button.addEventListener("click", onClick);
+
+  // If tooltip is provided, add it as a title attribute
+  if (tooltip) {
+      button.title = tooltip;
   }
+
+  return button;
+}
+
   
     // ─────────────────────────
   // 🪟 Modal Component
@@ -92,38 +98,6 @@ function createButton({ id, text, onClick, color = "primary", style = {} }) {
   }
   
    
-  
- // ─────────────────────────
-// 🧩 Reactive Button (with Store)
-// ─────────────────────────
-function createReactiveButton({ id, storeKey, store, onClick = () => {}, color = "primary", style = {} }) {
-    const button = document.createElement('button');
-    button.id = id;
-  
-    store.subscribe(storeKey, (value) => {
-      button.textContent = `Count: ${value}`;
-    });
-  
-    button.addEventListener('click', () => {
-      store.set(storeKey, store.get(storeKey) + 1);
-      onClick();
-    });
-  
-    const themedStyle = {
-      backgroundColor: Theme.colors[color] || Theme.colors.primary,
-      color: "#fff",
-      border: "none",
-      borderRadius: "4px",
-      padding: Theme.spacing.padding,
-      margin: Theme.spacing.margin,
-      cursor: "pointer",
-      fontFamily: Theme.fonts.base
-    };
-  
-    Object.assign(button.style, themedStyle, style);
-  
-    return button;
-  }
   
   // ─────────────────────────
   // 📋 List Component
